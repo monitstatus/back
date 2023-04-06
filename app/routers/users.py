@@ -159,12 +159,6 @@ def verify_user(
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user)
 ):
-    customer = crud.customer.get_by_user_id(db=db, user_id=current_user.id)
-    if not customer:
-        customer_data = schemas.user.CustomerCreate(
-            user_id=current_user.id
-        )
-        crud.customer.create(db, obj_in=customer_data)
     return crud.user.update(db, db_obj=current_user, obj_in={'is_active': True})
 
 
@@ -196,5 +190,4 @@ def test_token(
     current_user: models.User = Depends(deps.get_current_user)
 ):
     """ Test access token """
-    current_user.plan = crud.customer.get_by_user_id(db=db, user_id=current_user.id)
     return current_user

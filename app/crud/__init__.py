@@ -7,4 +7,3 @@ from .crud_schedule import schedule
 from .crud_statuspage import statuspage
 from .crud_user import user
 from .crud_invitation import invitation
-from .crud_customer import customer

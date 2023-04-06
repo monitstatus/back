@@ -4,12 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core import config
 from app.routers import (
-    billing, incidents, integrations, monitors, schedules, statuspages, users
+    incidents, integrations, monitors, schedules, statuspages, users
 )
 
 
 app = FastAPI()
-app.include_router(billing.router)
 app.include_router(incidents.router)
 app.include_router(integrations.router)
 app.include_router(monitors.router)

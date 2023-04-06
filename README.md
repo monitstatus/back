@@ -1,13 +1,5 @@
 # Monitorstatus backend
 
-## Stripe devenv
-
-Install stripe cli and test with `stripe login` and
-
-```
-stripe listen --forward-to localhost:8000/billing/webhook
-```
-
 ## Database operation tips
 
 ### Rebuild

@@ -48,29 +48,9 @@ class PeriodicityEnum(str, Enum):
     monthly = 'monthly'
     annually = 'annually'
 
-
-class TierEnum(str, Enum):
-    basic = 'basic'
-    startup = 'startup'
-    enterprise = 'enterprise'
-
-
-class Plan(BaseModel):
-    tier: TierEnum | None
-    periodicity: PeriodicityEnum | None
-    max_monitors: int | None
-    min_check_interval: int | None
-    max_locations: int | None
-    max_team_users: int | None
-
-    class Config:
-        orm_mode = True
-
-
 # Additional properties to return via API
 class User(UserInDBBase):
-    team: Team | None = None
-    plan: Plan | None = None
+    pass
 
 
 # Additional properties stored in DB
@@ -98,18 +78,3 @@ class InvitationCreate(InvitationBase):
 
 class InvitationUpdate(InvitationBase):
     pass
-
-
-# Customer
-class CustomerBase(BaseModel):
-    user_id: int
-    stripe_customer_id: str | None
-    plan_price_id: str | None
-
-
-class CustomerCreate(CustomerBase):
-    pass
-
-
-class CustomerUpdate(CustomerBase):
-    user_id: int | None

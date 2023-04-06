@@ -1,7 +1,7 @@
 """Add user created at
 
 Revision ID: 3e8ee2e89ded
-Revises: 94dbe42c1eb4
+Revises: b3d933975a8d
 Create Date: 2023-01-27 15:53:16.062655
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '3e8ee2e89ded'
-down_revision = '94dbe42c1eb4'
+down_revision = 'b3d933975a8d'
 branch_labels = None
 depends_on = None
 

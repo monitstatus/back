@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.api import deps
 import app.services.availability as availability_services
-import app.services.billing_plan as billing_plan_services
 
 
 router = APIRouter()
@@ -27,18 +26,6 @@ async def create_monitor(
                 'msg': f"should be defined on alert_type {monitor.alert_type.value}",
                 'type': 'value_error.str.condition',
             }]
-        )
-
-    if not billing_plan_services.user_plan_allows_periodicity(db, current_user, monitor.periodicity):
-        raise HTTPException(
-            403,
-            detail="You are trying to define a check frequency greater than that allowed in your plan."
-        )
-
-    if billing_plan_services.user_has_arrived_to_max_monitors_in_plan(db, current_user):
-        raise HTTPException(
-            403,
-            detail="You have no more room for monitors in your current plan."
         )
 
     return crud.monitor.create_with_owner(db=db, obj_in=monitor, owner_id=current_user.id)
@@ -84,12 +71,6 @@ async def update_monitor(
 
     if not current_user.has_access(db_monitor):
         raise HTTPException(status_code=403, detail="Unauthorized")
-
-    if not billing_plan_services.user_plan_allows_periodicity(db, current_user, monitor.periodicity):
-        raise HTTPException(
-            403,
-            detail="You are trying to define a check frequency greater than that allowed in your plan."
-        )
 
     return crud.monitor.update(db, db_obj=db_monitor, obj_in=monitor)
 
