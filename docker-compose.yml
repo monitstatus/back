@@ -1,0 +1,72 @@
+version: '3'
+
+services:
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A app.tasks beat -l info
+    environment:
+      - TZ=Europe/Madrid
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A app.tasks worker -l info
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Madrid
+      - WORKER_ID="Europe - 127.0.0.1"
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn app.main:app --reload --host 0.0.0.0
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Madrid
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - redis
+      - db
+      - celery-worker
+      - celery-beat
+
+  status:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn app.status:app --reload --host 0.0.0.0
+    volumes:
+      - .:/app
+    ports:
+      - 8001:8000
+    depends_on:
+      - db
+
+  redis:
+    image: redis:6.2
+
+  db:
+    image: postgres:14.5
+    env_file:
+      - .env
+    volumes:
+     - ./postgres_data:/var/lib/postgresql/data

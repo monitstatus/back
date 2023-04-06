@@ -1,0 +1,3 @@
+__pycache__/
+postgres_data/
+celerybeat_schedule

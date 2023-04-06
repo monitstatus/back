@@ -1,0 +1,14 @@
+fastapi[all]==0.94.0
+SQLAlchemy==1.4.46
+alembic==1.10.2
+celery[redis]==5.2.7
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+psycopg2-binary==2.9.5
+requests==2.28.2
+sendgrid==6.9.7
+sentry-sdk[fastapi]==1.16.0
+stripe==5.2.0
+humanize==4.6.0
+slack-sdk==3.20.2
+pythonping==1.1.4
