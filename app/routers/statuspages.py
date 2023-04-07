@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -6,13 +8,15 @@ from app.api import deps
 
 
 router = APIRouter()
+CurrentUser = Annotated[models.User, Depends(deps.get_current_user)]
+DBSession = Annotated[Session, Depends(deps.get_db)]
 
 
 @router.post("/statuspages", response_model=schemas.StatusPage, status_code=status.HTTP_201_CREATED)
 async def create_statuspage(
     statuspage: schemas.StatusPageCreate,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     db_existent = crud.statuspage.get_by_subdomain(db, subdomain=statuspage.subdomain)
     if db_existent:
@@ -34,8 +38,8 @@ async def create_statuspage(
 
 @router.get("/statuspages", response_model=list[schemas.StatusPage], status_code=status.HTTP_200_OK)
 async def list_statuspages(
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     return crud.statuspage.get_multi_by_owner(db, owner_id=current_user.id)
 
@@ -43,8 +47,8 @@ async def list_statuspages(
 @router.get("/statuspages/{statuspage_id}", response_model=schemas.StatusPage, status_code=status.HTTP_200_OK)
 async def get_statuspage(
     statuspage_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     db_statuspage = crud.statuspage.get(db, id=statuspage_id)
     if db_statuspage is None:
@@ -60,8 +64,8 @@ async def get_statuspage(
 async def update_statuspage(
     statuspage_id: int,
     statuspage: schemas.StatusPageUpdate,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     db_statuspage = crud.statuspage.get(db, id=statuspage_id)
     if db_statuspage is None:
@@ -76,8 +80,8 @@ async def update_statuspage(
 @router.delete("/statuspages/{statuspage_id}", status_code=status.HTTP_200_OK)
 async def delete_statuspage(
     statuspage_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     db_statuspage = crud.statuspage.get(db, id=statuspage_id)
     if db_statuspage is None:

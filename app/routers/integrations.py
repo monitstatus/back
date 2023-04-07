@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -8,13 +10,15 @@ from app.services.integrations import generate_random_string
 
 
 router = APIRouter()
+CurrentUser = Annotated[models.User, Depends(deps.get_current_user)]
+DBSession = Annotated[Session, Depends(deps.get_db)]
 
 
 @router.post("/integrations", response_model=schemas.Integration, status_code=status.HTTP_201_CREATED)
 async def create_integration(
     integration: schemas.IntegrationCreate,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     if integration.kind == schemas.IntegrationServicesEnum.telegram:
         integration.telegram_random_string = generate_random_string()
@@ -24,8 +28,8 @@ async def create_integration(
 
 @router.get("/integrations", response_model=list[schemas.Integration], status_code=status.HTTP_200_OK)
 async def list_integrations(
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     return crud.integration.get_multi_by_owner(db, owner_id=current_user.id)
 
@@ -33,8 +37,8 @@ async def list_integrations(
 @router.delete("/integrations/{integration_id}", status_code=status.HTTP_200_OK)
 async def delete_integration(
     integration_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     db_integration = crud.integration.get(db, id=integration_id)
     if db_integration is None:
@@ -53,7 +57,7 @@ async def delete_integration(
 async def telegram_webhook(
     token: str,
     msg: schemas.TelegramWebhook,
-    db: Session = Depends(deps.get_db),
+    db: DBSession,
 ):
 
     # validate token and start command

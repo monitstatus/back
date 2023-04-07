@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -9,13 +10,15 @@ import app.services.availability as availability_services
 
 
 router = APIRouter()
+CurrentUser = Annotated[models.User, Depends(deps.get_current_user)]
+DBSession = Annotated[Session, Depends(deps.get_db)]
 
 
 @router.post("/monitors", response_model=schemas.Monitor, status_code=status.HTTP_201_CREATED)
 async def create_monitor(
     monitor: schemas.MonitorCreate,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     # if the alert type is keyword, keyword should be specified
     if monitor.alert_type != schemas.AlertTypeEnum.unavailable and monitor.keyword is None:
@@ -33,8 +36,8 @@ async def create_monitor(
 
 @router.get("/monitors", response_model=list[schemas.Monitor], status_code=status.HTTP_200_OK)
 async def list_monitors(
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     if current_user.team_id:
         return crud.monitor.get_multi_by_team(db, team_id=current_user.team_id)
@@ -45,8 +48,8 @@ async def list_monitors(
 @router.get("/monitors/{monitor_id}", response_model=schemas.Monitor, status_code=status.HTTP_200_OK)
 async def get_monitor(
     monitor_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     db_monitor = crud.monitor.get(db, id=monitor_id)
     if db_monitor is None:
@@ -62,8 +65,8 @@ async def get_monitor(
 async def update_monitor(
     monitor_id: int,
     monitor: schemas.MonitorUpdate,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     db_monitor = crud.monitor.get(db, id=monitor_id)
     if db_monitor is None:
@@ -78,8 +81,8 @@ async def update_monitor(
 @router.delete("/monitors/{monitor_id}", status_code=status.HTTP_200_OK)
 async def delete_monitor(
     monitor_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     db_monitor = crud.monitor.get(db, id=monitor_id)
     if db_monitor is None:
@@ -95,9 +98,9 @@ async def delete_monitor(
 @router.get("/monitors/{monitor_id}/results", response_model=list[schemas.Result], status_code=status.HTTP_200_OK)
 async def list_results(
     monitor_id: int,
+    db: DBSession,
+    current_user: CurrentUser,
     since: datetime | None = None,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
 ):
     # TODO add limit for pagination and avoid enormous queries
     db_monitor = crud.monitor.get(db, id=monitor_id)
@@ -113,10 +116,10 @@ async def list_results(
 @router.get("/monitors/{monitor_id}/status", status_code=status.HTTP_200_OK)
 async def get_monitor_status(
     monitor_id: int,
+    db: DBSession,
+    current_user: CurrentUser,
     start_date: datetime | None = None,
     interval: int = 15,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
 ):
     if not start_date:
         start_date = datetime.now() - timedelta(days=1)

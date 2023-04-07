@@ -62,10 +62,10 @@ services:
       - db
 
   redis:
-    image: redis:6.2
+    image: redis:7.0.10
 
   db:
-    image: postgres:14.5
+    image: postgres:15.2
     env_file:
       - .env
     volumes:

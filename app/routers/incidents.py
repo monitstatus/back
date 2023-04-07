@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -8,13 +9,15 @@ from app.api import deps
 
 
 router = APIRouter()
+CurrentUser = Annotated[models.User, Depends(deps.get_current_user)]
+DBSession = Annotated[Session, Depends(deps.get_db)]
 
 
 @router.get("/incidents", response_model=list[schemas.Incident], status_code=status.HTTP_200_OK)
 async def list_incidents(
+    db: DBSession,
+    current_user: CurrentUser,
     monitor_id: int | None = None,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
 ):
     if monitor_id:
         db_monitor = crud.monitor.get(db, id=monitor_id)
@@ -32,8 +35,8 @@ async def list_incidents(
 @router.get("/incidents/{incident_id}", response_model=schemas.Incident, status_code=status.HTTP_200_OK)
 async def get_incident(
     incident_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     db_incident = crud.incident.get(db, id=incident_id)
     if db_incident is None:
@@ -48,8 +51,8 @@ async def get_incident(
 @router.get("/incidents/{incident_id}/events", response_model=list[schemas.IncidentEvent], status_code=status.HTTP_200_OK)
 async def get_incident_events(
     incident_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     db_incident = crud.incident.get(db, id=incident_id)
     if db_incident is None:
@@ -64,8 +67,8 @@ async def get_incident_events(
 @router.post("/incidents/{incident_id}/acknowledge", response_model=schemas.Incident, status_code=status.HTTP_200_OK)
 async def acknowledge_incident(
     incident_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     db_incident = crud.incident.get(db, id=incident_id)
     if db_incident is None:

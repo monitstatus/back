@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
@@ -9,12 +11,14 @@ from app.core import security
 
 
 router = APIRouter()
+CurrentUser = Annotated[models.User, Depends(deps.get_current_user)]
+DBSession = Annotated[Session, Depends(deps.get_db)]
 
 
 @router.post("/users", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user(
     user_in: schemas.UserCreate,
-    db: Session = Depends(deps.get_db)
+    db: DBSession,
 ):
     user = crud.user.get_by_email(db, email=user_in.email)
     if user:
@@ -46,16 +50,16 @@ def create_user(
 @router.put("/users", response_model=schemas.User, status_code=status.HTTP_200_OK)
 async def update_user(
     user: schemas.UserUpdate,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     return crud.user.update(db, db_obj=current_user, obj_in=user)
 
 
 @router.delete("/users", status_code=status.HTTP_200_OK)
 async def delete_user(
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     return crud.user.remove(db, id=current_user.id)
 
@@ -63,8 +67,8 @@ async def delete_user(
 @router.post("/users/invitations", response_model=list[schemas.Invitation], status_code=status.HTTP_201_CREATED)
 async def send_invitations(
     emails_in: list[EmailStr],
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     if current_user.team_role != models.user.TeamRoles.owner:
         raise HTTPException(
@@ -99,8 +103,8 @@ async def send_invitations(
 
 @router.get("/users/invitations", response_model=list[schemas.Invitation], status_code=status.HTTP_200_OK)
 async def list_invitations(
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     if current_user.team is None:
         return HTTPException(status_code=403, detail="You don't have a team")
@@ -111,8 +115,8 @@ async def list_invitations(
 @router.delete("/users/invitations/{invitation_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_invitation(
     invitation_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     if current_user.team is None:
         return HTTPException(status_code=403, detail="You don't have a team")
@@ -131,8 +135,8 @@ async def delete_invitation(
 @router.delete("/users/team/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_from_team(
     user_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     if current_user.team is None:
         return HTTPException(status_code=403, detail="You don't have a team")
@@ -156,15 +160,15 @@ async def delete_user_from_team(
 
 @router.post("/users/verify", response_model=schemas.User, status_code=status.HTTP_200_OK)
 def verify_user(
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    db: DBSession,
+    current_user: CurrentUser,
 ):
     return crud.user.update(db, db_obj=current_user, obj_in={'is_active': True})
 
 
 @router.post("/login/access-token", response_model=schemas.Token)
 def login_access_token(
-    db: Session = Depends(deps.get_db),
+    db: DBSession,
     form_data: OAuth2PasswordRequestForm = Depends()
 ):
     """
@@ -186,8 +190,7 @@ def login_access_token(
 
 @router.post("/login/test-token", response_model=schemas.User)
 def test_token(
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
+    current_user: CurrentUser,
 ):
     """ Test access token """
     return current_user
