@@ -36,3 +36,7 @@ EMAIL_VERIFICATION_SENDER_MAIL_ADDRESS = os.environ.get(
 
 # telegram
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
+
+# slack
+SLACK_CLIENT_ID = os.environ.get('SLACK_CLIENT_ID')
+SLACK_CLIENT_SECRET = os.environ.get('SLACK_CLIENT_SECRET')
