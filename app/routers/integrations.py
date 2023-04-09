@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, APIRouter, HTTPException, status
+from fastapi import Body, Depends, APIRouter, HTTPException, status
 from sqlalchemy.orm import Session
 from slack_sdk.web import WebClient
 
@@ -56,7 +56,7 @@ async def delete_integration(
 
 @router.post("/integrations/slackOauthAccess")
 async def obtain_slack_oauth_access(
-    code: str,
+    code: Annotated[str, Body()],
     current_user: CurrentUser,
 ):
     redirect_uri = f'{config.FRONT_BASE_URL}/integrations/slack'
