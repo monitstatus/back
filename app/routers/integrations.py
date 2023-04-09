@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy.orm import Session
+from slack_sdk.web import WebClient
 
 from app import crud, models, schemas, tasks
 from app.api import deps
@@ -51,6 +52,39 @@ async def delete_integration(
         tasks.slack_revoke_token.delay(db_integration.slack_bot_token)
 
     return crud.integration.remove(db, id=integration_id)
+
+
+@router.post("/integrations/slackOauthAccess")
+async def obtain_slack_oauth_access(
+    code: str,
+    current_user: CurrentUser,
+):
+    redirect_uri = f'{config.FRONT_BASE_URL}/integrations/slack'
+
+    client = WebClient()  # no prepared token needed for this
+    # Complete the installation by calling oauth.v2.access API method
+    oauth_response = client.oauth_v2_access(
+        client_id=config.SLACK_CLIENT_ID,
+        client_secret=config.SLACK_CLIENT_SECRET,
+        redirect_uri=redirect_uri,
+        code=code,
+    )
+
+    print(oauth_response)
+    incoming_webhook = oauth_response.get("incoming_webhook", {})
+    installed_team = oauth_response.get("team", {})
+    bot_token = oauth_response.get("access_token")
+
+    return {
+        'access_token': bot_token,
+        'incoming_webhook': {
+            'url': incoming_webhook.get('url'),
+            'channel': incoming_webhook.get('channel')
+        },
+        'team': {
+            'name': installed_team.get('name')
+        }
+    }
 
 
 @router.post("/integrations/telegram/{token}")
